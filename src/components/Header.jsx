@@ -3,6 +3,7 @@ import { colors, fonts } from "../styles/styleGuide";
 import Logo from "../assets/images/logo.svg";
 import Unit from "../assets/images/icon-units.svg";
 import Dropdown from "../assets/images/icon-dropdown.svg";
+import UnitsDropDown from "./UnitsDropDown";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -31,6 +32,7 @@ const Header = () => {
               }`}
             />
           </button>
+          {isOpen && <UnitsDropDown />}
         </div>
       </div>
       <div
