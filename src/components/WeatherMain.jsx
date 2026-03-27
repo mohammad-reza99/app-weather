@@ -5,10 +5,20 @@ import sunIcon from "../assets/images/icon-sunny.webp";
 import bgSmall from "../assets/images/bg-today-small.svg";
 import bgLarge from "../assets/images/bg-today-large.svg";
 import DailyForecast from "./DailyForecast";
+import { Star } from "lucide-react";
 
 const WeatherMain = () => {
-  const { weatherData, loading, error, convertTemperature, convertWindSpeed } =
-    useContext(WeatherContext);
+  const {
+    weatherData,
+    loading,
+    error,
+    convertTemperature,
+    convertWindSpeed,
+    favoriteCities,
+    fetchWeather,
+    isFavoriteCity,
+    toggleFavoriteCity,
+  } = useContext(WeatherContext);
 
   if (loading)
     return (
@@ -16,7 +26,7 @@ const WeatherMain = () => {
     );
 
   if (error)
-    return <p className="text-red-400 mt-6 text-lg text-center"> {error}</p>;
+    return <p className="text-red-400 mt-6 text-lg text-center">{error}</p>;
 
   if (!weatherData)
     return (
@@ -32,6 +42,8 @@ const WeatherMain = () => {
     daily: { time: dailyDates, temperature_2m_max, temperature_2m_min } = {},
   } = weatherData;
 
+  const favorite = isFavoriteCity(city);
+
   return (
     <section className="flex flex-col items-center gap-6 w-full max-w-[750px]">
       <div className="relative w-full h-[220px] rounded-xl shadow-lg overflow-hidden">
@@ -45,20 +57,36 @@ const WeatherMain = () => {
         </picture>
 
         <div className="relative z-10 flex flex-col justify-between h-full p-6 text-neutral-0">
-          <div>
-            <h2
-              style={{ fontFamily: fonts.body }}
-              className="text-lg sm:text-xl font-semibold"
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2
+                style={{ fontFamily: fonts.body }}
+                className="text-lg sm:text-xl font-semibold"
+              >
+                {city}, {country}
+              </h2>
+              <p className="text-neutral-300 text-sm">
+                {new Date(current.time).toLocaleString("en-GB", {
+                  weekday: "long",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </p>
+            </div>
+
+            <button
+              onClick={() => toggleFavoriteCity(city)}
+              className="flex items-center justify-center rounded-full p-2 bg-black/20 hover:bg-black/30 transition-all"
+              aria-label="Toggle favorite city"
+              title={favorite ? "Remove from favorites" : "Add to favorites"}
             >
-              {city}, {country}
-            </h2>
-            <p className="text-neutral-300 text-sm">
-              {new Date(current.time).toLocaleString("en-GB", {
-                weekday: "long",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </p>
+              <Star
+                size={22}
+                className={
+                  favorite ? "fill-yellow-400 text-yellow-400" : "text-white"
+                }
+              />
+            </button>
           </div>
 
           <div className="flex justify-between items-center mt-4">
@@ -77,13 +105,31 @@ const WeatherMain = () => {
         </div>
       </div>
 
+      {favoriteCities.length > 0 && (
+        <div className="w-full bg-neutral-800 rounded-xl p-4 border border-neutral-700">
+          <h3 className="text-neutral-200 text-sm font-semibold mb-3">
+            Favorite Cities
+          </h3>
+
+          <div className="flex flex-wrap gap-2">
+            {favoriteCities.map((favoriteCity) => (
+              <button
+                key={favoriteCity}
+                onClick={() => fetchWeather(favoriteCity)}
+                className="px-3 py-2 rounded-full bg-neutral-700 text-neutral-100 text-sm hover:bg-blue-600 transition-all"
+              >
+                {favoriteCity}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
         {[
           {
             label: "Wind",
-            value: `${convertWindSpeed(current.windspeed).toFixed(
-              1
-            )} ${"km/h"}`,
+            value: `${convertWindSpeed(current.windspeed).toFixed(1)} ${"km/h"}`,
           },
           {
             label: "Humidity",
@@ -113,7 +159,7 @@ const WeatherMain = () => {
                 weekday: "short",
               }),
               temp: `${convertTemperature(temperature_2m_max[i]).toFixed(
-                0
+                0,
               )}° / ${convertTemperature(temperature_2m_min[i]).toFixed(0)}°`,
               condition: "Sunny",
               icon: sunIcon,
