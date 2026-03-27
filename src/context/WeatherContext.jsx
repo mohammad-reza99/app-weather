@@ -1,4 +1,4 @@
-import { createContext, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 import axios from "axios";
 
 export const WeatherContext = createContext();
@@ -10,6 +10,18 @@ export const WeatherProvider = ({ children }) => {
 
   const [tempUnit, setTempUnit] = useState("celsius");
   const [windUnit, setWindUnit] = useState("kmh");
+
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem("theme") || "dark";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prevTheme) => (prevTheme === "dark" ? "light" : "dark"));
+  };
 
   const fetchWeatherByCoords = async (
     latitude,
@@ -58,6 +70,7 @@ export const WeatherProvider = ({ children }) => {
 
       if (!geoRes.data.results || geoRes.data.results.length === 0) {
         setError("City not found");
+        setLoading(false);
         return;
       }
 
@@ -145,6 +158,9 @@ export const WeatherProvider = ({ children }) => {
         setWindUnit,
         convertTemperature,
         convertWindSpeed,
+        theme,
+        setTheme,
+        toggleTheme,
       }}
     >
       {children}
