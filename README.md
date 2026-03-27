@@ -88,6 +88,12 @@ npm run dev
 
 ---
 
+## 🚀 Live Demo
+
+[View Live Project](https://app-weather-two-chi.vercel.app)
+
+---
+
 ## 📌 Future Improvements
 
 - 🌙 Dark / Light mode

@@ -1,23 +1,25 @@
 import { useContext, useState } from "react";
 import { WeatherContext } from "../context/WeatherContext";
-import { colors, fonts } from "../styles/styleGuide";
+import { colors } from "../styles/styleGuide";
 import searchIcon from "../assets/images/icon-search.svg";
 import loadingIcon from "../assets/images/icon-loading.svg";
 import errorIcon from "../assets/images/icon-error.svg";
 
 const SearchBar = () => {
   const [query, setQuery] = useState("");
-  const { fetchWeather, loading, error } = useContext(WeatherContext);
+  const { fetchWeather, getUserLocation, loading, error } =
+    useContext(WeatherContext);
 
-  const handleSubmite = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (!query.trim()) return;
     fetchWeather(query);
   };
+
   return (
     <div className="flex flex-col items-center mt-8 w-full px-4 relative">
       <form
-        onSubmit={handleSubmite}
+        onSubmit={handleSubmit}
         className={`relative w-full sm:w-[420px] flex items-center rounded-lg border transition-all duration-200 ${
           error
             ? "border-red-500"
@@ -27,7 +29,7 @@ const SearchBar = () => {
       >
         <input
           type="text"
-          placeholder="Searche for a city"
+          placeholder="Search for a city"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="w-full bg-transparent outline-none px-4 py-3 text-neutral-0 placeholder:text-neutral-400"
@@ -40,20 +42,34 @@ const SearchBar = () => {
           {loading ? (
             <img
               src={loadingIcon}
-              alt="loading..."
+              alt="loading"
               className="w-5 h-5 animate-spin"
             />
           ) : error ? (
-            <img src={errorIcon} alt="error" className="w-5 h-5 " />
+            <img src={errorIcon} alt="error" className="w-5 h-5" />
           ) : (
             <img
               src={searchIcon}
-              alt="serach"
+              alt="search"
               className="w-5 h-5 opacity-90 hover:opacity-100"
             />
           )}
         </button>
       </form>
+
+      <button
+        type="button"
+        onClick={getUserLocation}
+        disabled={loading}
+        className="mt-3 px-4 py-2 rounded-lg text-sm font-medium border border-neutral-500 hover:border-neutral-300 transition-all duration-200"
+        style={{
+          backgroundColor: colors.neutral[800],
+          color: colors.neutral[0],
+        }}
+      >
+        Use My Location
+      </button>
+
       {error && (
         <p className="text-red-400 text-sm mt-2 text-center">{error}</p>
       )}
