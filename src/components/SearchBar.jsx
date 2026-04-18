@@ -7,7 +7,7 @@ import errorIcon from "../assets/images/icon-error.svg";
 
 const SearchBar = () => {
   const [query, setQuery] = useState("");
-  const { fetchWeather, getUserLocation, loading, error } =
+  const { fetchWeather, getUserLocation, loading, error, theme } =
     useContext(WeatherContext);
 
   const handleSubmit = (e) => {
@@ -25,15 +25,23 @@ const SearchBar = () => {
             ? "border-red-500"
             : "border-neutral-500 hover:border-neutral-300 focus-within:border-blue-500"
         }`}
-        style={{ backgroundColor: colors.neutral[800] }}
+        style={{
+          backgroundColor:
+            theme === "dark" ? colors.neutral[800] : colors.neutral[200],
+        }}
       >
         <input
           type="text"
           placeholder="Search for a city"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="w-full bg-transparent outline-none px-4 py-3 text-neutral-0 placeholder:text-neutral-400"
+          className={`w-full bg-transparent outline-none px-4 py-3 ${
+            theme === "dark"
+              ? "text-neutral-0 placeholder:text-neutral-400"
+              : "text-neutral-900 placeholder:text-neutral-600"
+          }`}
         />
+
         <button
           type="submit"
           disabled={loading}
@@ -63,8 +71,9 @@ const SearchBar = () => {
         disabled={loading}
         className="mt-3 px-4 py-2 rounded-lg text-sm font-medium border border-neutral-500 hover:border-neutral-300 transition-all duration-200"
         style={{
-          backgroundColor: colors.neutral[800],
-          color: colors.neutral[0],
+          backgroundColor:
+            theme === "dark" ? colors.neutral[800] : colors.neutral[200],
+          color: theme === "dark" ? colors.neutral[0] : colors.neutral[900],
         }}
       >
         Use My Location

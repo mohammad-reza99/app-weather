@@ -14,7 +14,7 @@ const getIcon = (maxTemp, precipitation) => {
 };
 
 const DailyForecast = () => {
-  const { weatherData } = useContext(WeatherContext);
+  const { weatherData, convertTemperature } = useContext(WeatherContext);
 
   if (!weatherData || !weatherData.daily) return null;
 
@@ -30,15 +30,18 @@ const DailyForecast = () => {
       >
         7-Day Forecast
       </h3>
+
       <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
         {time.map((day, i) => {
           const date = new Date(day);
-          const weekday = date.toLocaleDateString("en-us", {
+          const weekday = date.toLocaleDateString("en-US", {
             weekday: "short",
           });
-          const max = Math.round(temperature_2m_max[i]);
-          const min = Math.round(temperature_2m_min[i]);
-          const rain = precipitation_sum[i];
+
+          const max = Math.round(convertTemperature(temperature_2m_max[i]));
+          const min = Math.round(convertTemperature(temperature_2m_min[i]));
+          const rain = precipitation_sum[i] ?? 0;
+
           return (
             <div
               key={day}
@@ -47,17 +50,20 @@ const DailyForecast = () => {
               <p className="text-neutral-0 font-medium text-sm mb-1">
                 {weekday}
               </p>
+
               <img
                 src={getIcon(max, rain)}
                 alt="weather icon"
                 className="w-7 h-7 mb-1"
               />
+
               <p
                 style={{ fontFamily: fonts.display }}
                 className="text-neutral-0 text-lg font-semibold"
               >
                 {max}° / {min}°
               </p>
+
               <p className="text-neutral-400 text-xs">{rain.toFixed(1)} mm</p>
             </div>
           );

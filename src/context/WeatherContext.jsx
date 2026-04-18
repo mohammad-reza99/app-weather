@@ -15,9 +15,18 @@ export const WeatherProvider = ({ children }) => {
     return localStorage.getItem("theme") || "dark";
   });
 
+  const [favoriteCities, setFavoriteCities] = useState(() => {
+    const savedCities = localStorage.getItem("favoriteCities");
+    return savedCities ? JSON.parse(savedCities) : [];
+  });
+
   useEffect(() => {
     localStorage.setItem("theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem("favoriteCities", JSON.stringify(favoriteCities));
+  }, [favoriteCities]);
 
   const toggleTheme = () => {
     setTheme((prevTheme) => (prevTheme === "dark" ? "light" : "dark"));
@@ -35,10 +44,10 @@ export const WeatherProvider = ({ children }) => {
       setWeatherData(null);
 
       const weatherRes = await axios.get(
-        `https://api.open-meteo.com/v1/gfs?latitude=${latitude}&longitude=${longitude}&current_weather=true&hourly=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto`,
+        `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m&hourly=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto`,
       );
 
-      if (!weatherRes.data.current_weather) {
+      if (!weatherRes.data.current) {
         setError("No weather data available for this location");
         return;
       }
@@ -46,7 +55,7 @@ export const WeatherProvider = ({ children }) => {
       setWeatherData({
         city: cityName || "Current Location",
         country: countryName || "",
-        current: weatherRes.data.current_weather,
+        current: weatherRes.data.current,
         hourly: weatherRes.data.hourly,
         daily: weatherRes.data.daily,
       });
@@ -70,7 +79,6 @@ export const WeatherProvider = ({ children }) => {
 
       if (!geoRes.data.results || geoRes.data.results.length === 0) {
         setError("City not found");
-        setLoading(false);
         return;
       }
 
@@ -80,6 +88,7 @@ export const WeatherProvider = ({ children }) => {
     } catch (err) {
       console.error("Weather API error:", err);
       setError("Failed to fetch weather data");
+    } finally {
       setLoading(false);
     }
   };
@@ -133,6 +142,29 @@ export const WeatherProvider = ({ children }) => {
     );
   };
 
+  const isFavoriteCity = (cityName) => {
+    return favoriteCities.includes(cityName);
+  };
+
+  const addFavoriteCity = (cityName) => {
+    if (!cityName || favoriteCities.includes(cityName)) return;
+    setFavoriteCities((prev) => [...prev, cityName]);
+  };
+
+  const removeFavoriteCity = (cityName) => {
+    setFavoriteCities((prev) => prev.filter((city) => city !== cityName));
+  };
+
+  const toggleFavoriteCity = (cityName) => {
+    if (!cityName) return;
+
+    if (favoriteCities.includes(cityName)) {
+      removeFavoriteCity(cityName);
+    } else {
+      addFavoriteCity(cityName);
+    }
+  };
+
   const convertTemperature = (temp) => {
     if (temp == null) return 0;
     return tempUnit === "celsius" ? temp : (temp * 9) / 5 + 32;
@@ -161,6 +193,12 @@ export const WeatherProvider = ({ children }) => {
         theme,
         setTheme,
         toggleTheme,
+        favoriteCities,
+        setFavoriteCities,
+        isFavoriteCity,
+        addFavoriteCity,
+        removeFavoriteCity,
+        toggleFavoriteCity,
       }}
     >
       {children}

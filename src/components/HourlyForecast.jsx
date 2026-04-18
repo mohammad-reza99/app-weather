@@ -1,4 +1,4 @@
-import { useContext, useState, useMemo } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { WeatherContext } from "../context/WeatherContext";
 import dropDownIcon from "../assets/images/icon-dropdown.svg";
 import { fonts } from "../styles/styleGuide";
@@ -6,38 +6,52 @@ import { fonts } from "../styles/styleGuide";
 const HourlyForecast = () => {
   const { weatherData, convertTemperature, loading } =
     useContext(WeatherContext);
+
   const [selectedDay, setSelectedDay] = useState("");
   const [isOpen, setIsOpen] = useState(false);
 
   const days = useMemo(() => {
     if (!weatherData?.daily?.time) return [];
-    return weatherData.daily.time.map((date) =>
-      new Date(date).toLocaleDateString("en-GB", { weekday: "long" })
-    );
-  }, [weatherData]);
 
-  const hours = useMemo(() => {
-    if (!weatherData?.hourly) return [];
-
-    return weatherData.hourly.time.map((time, i) => ({
-      time: new Date(time).toLocaleTimeString("en-GB", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      temp: convertTemperature(weatherData.hourly.temperature_2m[i]).toFixed(0),
+    return weatherData.daily.time.map((date) => ({
+      label: new Date(date).toLocaleDateString("en-GB", { weekday: "long" }),
+      value: date,
     }));
   }, [weatherData]);
 
-  if (!selectedDay && days.length > 0 && !loading) {
-    setSelectedDay(days[0]);
-  }
+  useEffect(() => {
+    if (days.length > 0) {
+      setSelectedDay(days[0].value);
+    } else {
+      setSelectedDay("");
+    }
+  }, [days]);
 
-  if (!weatherData)
+  const filteredHours = useMemo(() => {
+    if (!weatherData?.hourly || !selectedDay) return [];
+
+    return weatherData.hourly.time
+      .map((time, i) => ({
+        fullTime: time,
+        date: time.split("T")[0],
+        timeLabel: new Date(time).toLocaleTimeString("en-GB", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        temp: convertTemperature(weatherData.hourly.temperature_2m[i]).toFixed(
+          0,
+        ),
+      }))
+      .filter((item) => item.date === selectedDay);
+  }, [weatherData, selectedDay, convertTemperature]);
+
+  if (!weatherData) {
     return (
       <p className="text-neutral-400 mt-6 text-lg text-center">
         Search for a city to view hourly forecast
       </p>
     );
+  }
 
   return (
     <aside className="w-full bg-neutral-700 rounded-xl p-5 border border-neutral-600 flex flex-col h-full relative">
@@ -52,9 +66,10 @@ const HourlyForecast = () => {
         <div className="relative">
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="flex items-center justify-between w-36 bg-neutral-800 border border-neutral-600 text-neutral-0 text-sm px-3 py-1.5 rounded-md hover:border-blue-500 transition-all"
+            className="flex items-center justify-between w-40 bg-neutral-800 border border-neutral-600 text-neutral-0 text-sm px-3 py-1.5 rounded-md hover:border-blue-500 transition-all"
           >
-            {selectedDay || "Select day"}
+            {days.find((day) => day.value === selectedDay)?.label ||
+              "Select day"}
             <img
               src={dropDownIcon}
               alt="dropdown"
@@ -65,21 +80,21 @@ const HourlyForecast = () => {
           </button>
 
           {isOpen && (
-            <ul className="absolute right-0 mt-1 bg-neutral-800 border border-neutral-600 rounded-md w-36 shadow-lg z-50 overflow-hidden">
+            <ul className="absolute right-0 mt-1 bg-neutral-800 border border-neutral-600 rounded-md w-40 shadow-lg z-50 overflow-hidden">
               {days.map((day) => (
                 <li
-                  key={day}
+                  key={day.value}
                   onClick={() => {
-                    setSelectedDay(day);
+                    setSelectedDay(day.value);
                     setIsOpen(false);
                   }}
                   className={`px-3 py-2 text-sm cursor-pointer transition-colors ${
-                    selectedDay === day
+                    selectedDay === day.value
                       ? "bg-neutral-600 text-blue-400"
                       : "text-neutral-0 hover:bg-neutral-700"
                   }`}
                 >
-                  {day}
+                  {day.label}
                 </li>
               ))}
             </ul>
@@ -88,20 +103,28 @@ const HourlyForecast = () => {
       </div>
 
       <div className="flex flex-col gap-3 overflow-y-auto pr-1">
-        {hours.slice(0, 8).map((hour, index) => (
-          <div
-            key={index}
-            className="flex justify-between items-center bg-neutral-800 border border-neutral-700 rounded-lg py-3 px-4 hover:border-blue-500 transition-all"
-          >
-            <p className="text-neutral-0 font-medium">{hour.time}</p>
-            <p
-              style={{ fontFamily: fonts.body }}
-              className="text-neutral-0 text-lg font-semibold"
+        {loading ? (
+          <p className="text-neutral-300 text-sm">Loading hourly data...</p>
+        ) : filteredHours.length > 0 ? (
+          filteredHours.slice(0, 8).map((hour) => (
+            <div
+              key={hour.fullTime}
+              className="flex justify-between items-center bg-neutral-800 border border-neutral-700 rounded-lg py-3 px-4 hover:border-blue-500 transition-all"
             >
-              {hour.temp}°
-            </p>
-          </div>
-        ))}
+              <p className="text-neutral-0 font-medium">{hour.timeLabel}</p>
+              <p
+                style={{ fontFamily: fonts.body }}
+                className="text-neutral-0 text-lg font-semibold"
+              >
+                {hour.temp}°
+              </p>
+            </div>
+          ))
+        ) : (
+          <p className="text-neutral-400 text-sm">
+            No hourly forecast available
+          </p>
+        )}
       </div>
     </aside>
   );

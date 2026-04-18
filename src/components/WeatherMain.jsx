@@ -14,34 +14,32 @@ const WeatherMain = () => {
     error,
     convertTemperature,
     convertWindSpeed,
+    windUnit,
     favoriteCities,
     fetchWeather,
     isFavoriteCity,
     toggleFavoriteCity,
   } = useContext(WeatherContext);
 
-  if (loading)
+  if (loading) {
     return (
       <p className="text-neutral-300 mt-6 text-lg">Loading weather data...</p>
     );
+  }
 
-  if (error)
+  if (error) {
     return <p className="text-red-400 mt-6 text-lg text-center">{error}</p>;
+  }
 
-  if (!weatherData)
+  if (!weatherData) {
     return (
       <p className="text-neutral-400 mt-6 text-lg text-center">
         Search for a city to see the weather
       </p>
     );
+  }
 
-  const {
-    city,
-    country,
-    current,
-    daily: { time: dailyDates, temperature_2m_max, temperature_2m_min } = {},
-  } = weatherData;
-
+  const { city, country, current } = weatherData;
   const favorite = isFavoriteCity(city);
 
   return (
@@ -65,6 +63,7 @@ const WeatherMain = () => {
               >
                 {city}, {country}
               </h2>
+
               <p className="text-neutral-300 text-sm">
                 {new Date(current.time).toLocaleString("en-GB", {
                   weekday: "long",
@@ -95,11 +94,12 @@ const WeatherMain = () => {
               alt="Weather icon"
               className="w-32 h-32 sm:w-32 sm:h-32"
             />
+
             <p
               style={{ fontFamily: fonts.display }}
               className="text-6xl sm:text-7xl font-bold"
             >
-              {convertTemperature(current.temperature).toFixed(1)}°
+              {convertTemperature(current.temperature_2m).toFixed(1)}°
             </p>
           </div>
         </div>
@@ -129,7 +129,9 @@ const WeatherMain = () => {
         {[
           {
             label: "Wind",
-            value: `${convertWindSpeed(current.windspeed).toFixed(1)} ${"km/h"}`,
+            value: `${convertWindSpeed(current.wind_speed_10m).toFixed(1)} ${
+              windUnit === "kmh" ? "km/h" : "mph"
+            }`,
           },
           {
             label: "Humidity",
@@ -137,9 +139,12 @@ const WeatherMain = () => {
           },
           {
             label: "Feels Like",
-            value: `${convertTemperature(current.temperature).toFixed(1)}°`,
+            value: `${convertTemperature(current.temperature_2m).toFixed(1)}°`,
           },
-          { label: "Direction", value: `${current.winddirection ?? "--"}°` },
+          {
+            label: "Direction",
+            value: `${current.wind_direction_10m ?? "--"}°`,
+          },
         ].map((item) => (
           <div
             key={item.label}
@@ -151,22 +156,9 @@ const WeatherMain = () => {
         ))}
       </div>
 
-      {dailyDates && temperature_2m_max && (
-        <div className="w-full mt-4">
-          <DailyForecast
-            daily={dailyDates.map((day, i) => ({
-              day: new Date(day).toLocaleDateString("en-GB", {
-                weekday: "short",
-              }),
-              temp: `${convertTemperature(temperature_2m_max[i]).toFixed(
-                0,
-              )}° / ${convertTemperature(temperature_2m_min[i]).toFixed(0)}°`,
-              condition: "Sunny",
-              icon: sunIcon,
-            }))}
-          />
-        </div>
-      )}
+      <div className="w-full mt-4">
+        <DailyForecast />
+      </div>
     </section>
   );
 };
